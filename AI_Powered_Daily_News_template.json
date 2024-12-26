@@ -1,0 +1,969 @@
+{
+  "name": "My workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "jsCode": "return []"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        540,
+        1480
+      ],
+      "id": "0d34a8f4-bd96-4a7e-ba1e-16b72a8c69a0",
+      "name": "Return empty data1",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "jsCode": "return []"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        540,
+        1180
+      ],
+      "id": "94376fc1-ffdf-43c2-8947-6f3a012e3bf2",
+      "name": "Return empty data",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "jsCode": "// Input: The HTML content is provided as an array in $input.all()\nconst htmlContents = $input.all(); // Access the array of HTML content\n\n// Initialize an array to hold the results\nconst result = [];\n\n// Function to count occurrences of a character in a string\nfunction countOccurrences(str, char) {\n    return (str.match(new RegExp(char, 'g')) || []).length;\n}\n\n// Object to track counts for each category\nconst categoryCounts = {\n    bbc_news: 0,\n    nature: 0,\n    techcrunch: 0,\n    screenrant: 0,\n    dezeen: 0,\n};\n\n// Base URLs for each site\nconst baseURLs = {\n    bbc_news: \"https://www.bbc.com\",\n    nature: \"https://www.nature.com\",\n    engadget: \"https://www.engadget.com\",\n    screenrant: \"https://www.screenrant.com\",\n    dezeen: \"https://www.dezeen.com\",\n};\n\n// Define the maximum number of links to collect per category\nconst maxLinks = 5;\n\n// Update the processing logic\nhtmlContents.forEach(item => {\n    const htmlContent = item.json.data; // Access the HTML content from each item\n\n    // Use a regular expression to find all anchor tags with href attributes\n    const regex = /<a\\s+(?:[^>]*?\\s+)?href=\"([^\"]*)\"/g;\n    let match;\n\n    while ((match = regex.exec(htmlContent)) !== null) {\n        const href = match[1]; // The captured href value\n        console.log('Captured href:', href);\n\n        // Skip invalid or irrelevant links\n        if (!href || href === '/' || href.startsWith('#')) {\n            continue;\n        }\n\n        // Combined logic for Dezeen and TechCrunch\n        if (\n            (htmlContent.includes('dezeen.com') && href.includes('dezeen.com/2') && categoryCounts.dezeen < maxLinks) ||\n            (htmlContent.includes('techcrunch.com') && href.includes('https://techcrunch.com/2') && categoryCounts.techcrunch < maxLinks)\n        ) {\n            const site = htmlContent.includes('dezeen.com') ? \"dezeen\" : \"techcrunch\";\n            if (!result.some(entry => entry.json.site === site && entry.json.link === href)) {\n                console.log(`Adding ${site} link:`, href);\n                result.push({ json: { site, link: href } });\n                categoryCounts[site]++;\n            }\n        }\n\n        // Check conditions for BBC News\n        if (\n            htmlContent.includes('BBC News') &&\n            href.includes('article') &&\n            categoryCounts.bbc_news < maxLinks\n        ) {\n            result.push({ json: { site: \"bbc_news\", link: `${baseURLs.bbc_news}${href}` } });\n            categoryCounts.bbc_news++;\n        }\n\n        // Check conditions for nature.com\n        if (\n            htmlContent.includes('nature.com') &&\n            href.includes('article') &&\n            !href.includes('https://www.nature') &&\n            categoryCounts.nature < maxLinks\n        ) {\n            result.push({ json: { site: \"nature\", link: `${baseURLs.nature}${href}` } });\n            categoryCounts.nature++;\n        }\n\n        // Check conditions for ScreenRant only using countOccurrences(href, '-') >= 4\n        if (\n            htmlContent.includes('screenrant') &&\n            href.includes('/') &&\n            countOccurrences(href, '-') >= 4 &&\n            categoryCounts.screenrant < maxLinks\n        ) {\n            if (\n                !result.some(entry => entry.json.site === \"screenrant\" && entry.json.link === href)\n            ) {\n                result.push({ json: { site: \"screenrant\", link: `${baseURLs.screenrant}${href}` } });\n                categoryCounts.screenrant++;\n            }\n        }\n\n        // Stop processing if all categories have reached the maximum count\n        if (Object.values(categoryCounts).every(count => count >= maxLinks)) {\n            return result; // Exit the forEach loop early\n        }\n    }\n});\n\n// Return the resulting array\nreturn result;\n\n"
+      },
+      "id": "bce6ae83-939f-412e-9a1c-3e840cf72261",
+      "name": "Select the defined number of articles from the first",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1220,
+        880
+      ],
+      "alwaysOutputData": false
+    },
+    {
+      "parameters": {
+        "jsCode": "// Input: The HTML content is provided as an array in $input.all()\nconst htmlContents = $input.all(); // Access the array of HTML content\n\n// Initialize an array to hold the results\nconst result = [];\n\n// Function to count occurrences of a character in a string\nfunction countOccurrences(str, char) {\n    return (str.match(new RegExp(char, 'g')) || []).length;\n}\n\n// Object to track counts for each category\nconst categoryCounts = {\n    bbc_news: 0,\n    nature: 0,\n    TechCrunch: 0,\n    screenrant: 0,\n    Dezeen: 0,\n};\n\n// Base URLs for each site\nconst baseURLs = {\n    bbc_news: \"https://www.bbc.com\",\n    nature: \"https://www.nature.com\",\n    // techcrunch: \"https://www.techcrunch.com\",\n    screenrant: \"https://www.screenrant.com\",\n    // dezeen: \"https://www.dezeen.com\",\n};\n\n// Define the maximum number of links to collect per category\nconst maxLinks = 5;\n\n// Temporary storage for links by site\nconst linksBySite = {\n    bbc_news: [],\n    nature: [],\n    TechCrunch: [],\n    screenrant: [],\n    Dezeen: [],\n};\n\n// Update the processing logic\nhtmlContents.forEach(item => {\n    const htmlContent = item.json.data; // Access the HTML content from each item\n\n    // Use a regular expression to find all anchor tags with href attributes\n    const regex = /<a\\s+(?:[^>]*?\\s+)?href=\"([^\"]*)\"/g;\n    let match;\n\n    while ((match = regex.exec(htmlContent)) !== null) {\n        const href = match[1]; // The captured href value\n\n        // Skip invalid or irrelevant links\n        if (!href || href === '/' || href.startsWith('#')) {\n            continue;\n        }\n\n        // Combined logic for Dezeen and TechCrunch\n        if (\n            (htmlContent.includes('dezeen.com') && href.includes('dezeen.com/2') && categoryCounts.Dezeen < maxLinks) ||\n            (htmlContent.includes('techcrunch.com') && href.includes('https://techcrunch.com/2') && categoryCounts.TechCrunch < maxLinks)\n        ) {\n            const site = htmlContent.includes('dezeen.com') ? \"Dezeen\" : \"TechCrunch\";\n            if (!linksBySite[site].some(entry => entry.link === href)) {\n                linksBySite[site].push({ site, link: href });\n                categoryCounts[site]++;\n            }\n        }\n\n        // Check conditions for BBC News\n        if (\n            htmlContent.includes('BBC News') &&\n            href.includes('article') &&\n            categoryCounts.bbc_news < maxLinks\n        ) {\n            linksBySite.bbc_news.push({ \n                site: \"BBC_News\", \n                link: `${baseURLs.bbc_news}${href}` \n            });\n            categoryCounts.bbc_news++;\n        }\n\n        // Check conditions for nature.com\n        if (\n            htmlContent.includes('nature.com') &&\n            href.includes('article') &&\n            !href.includes('https://www.nature') &&\n            categoryCounts.nature < maxLinks\n        ) {\n            linksBySite.nature.push({ \n                site: \"Nature\", \n                link: `${baseURLs.nature}${href}` \n            });\n            categoryCounts.nature++;\n        }\n\n        // Check conditions for ScreenRant\n        if (\n            htmlContent.includes('screenrant') &&\n            href.includes('/') &&\n            countOccurrences(href, '-') >= 4 &&\n            categoryCounts.screenrant < maxLinks\n        ) {\n            if (!linksBySite.screenrant.some(entry => entry.link === href)) {\n                linksBySite.screenrant.push({ \n                    site: \"Screen Rant\", \n                    link: `${baseURLs.screenrant}${href}` \n                });\n                categoryCounts.screenrant++;\n            }\n        }\n\n        // Stop processing if all categories have reached the maximum count\n        if (Object.values(categoryCounts).every(count => count >= maxLinks)) {\n            break;\n        }\n    }\n});\n\n// Function to get random element from last 4 elements\nfunction getRandomFromLastFour(array) {\n    if (array.length === 0) return null;\n    const startIndex = Math.max(0, array.length - 4);\n    const randomIndex = startIndex + Math.floor(Math.random() * Math.min(4, array.length));\n    return array[randomIndex];\n}\n\n// Select random items from the last 4 elements of each site\nObject.keys(linksBySite).forEach(site => {\n    const randomItem = getRandomFromLastFour(linksBySite[site]);\n    if (randomItem) {\n        result.push({ json: randomItem });\n    }\n});\n\n// Return the final result with randomly selected items\nreturn result;\n\n"
+      },
+      "id": "aa3fc769-6a61-4dca-9d07-d532cb682514",
+      "name": "Select random article leaving the 1st one out",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1220,
+        660
+      ],
+      "alwaysOutputData": false
+    },
+    {
+      "parameters": {
+        "content": "# AI Insights: Daily News\n## Part 1 of 3 - Creating news using Visual scraping, MLM and Google Sheet\n### [Github](https://docs.n8n.io/workflows/sticky-notes/)",
+        "height": 600,
+        "width": 1900
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        460,
+        460
+      ],
+      "id": "10a89bbe-f5ef-4b9e-a9e7-db779b8d296c",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "## Part 2 of 3 - Creating Images using Hugging Face Flux model and Cloudflare R2 Storage",
+        "height": 260,
+        "width": 1100
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        460,
+        1100
+      ],
+      "id": "f8c87e4b-20c3-4dad-b6d3-eaf1688a7e51",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "content": "## Part 3 of 3 - Creating the HTML page using dynamic JS div and SFTP to upload to a server",
+        "height": 260,
+        "width": 1100
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        460,
+        1400
+      ],
+      "id": "0919c5d1-68d0-4611-a1f5-8ded72583a08",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 2,
+              "triggerAtMinute": 7
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        500,
+        660
+      ],
+      "id": "3b646df2-a2e7-42cc-84fc-717b6d5b90cd",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "operation": "delete",
+        "documentId": {
+          "__rl": true,
+          "value": "1m00bkGFFjEqRKfbHzldC8mfBnoKXsB38jRfM7qd_G2c",
+          "mode": "list",
+          "cachedResultName": "Test visual scrapping",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1m00bkGFFjEqRKfbHzldC8mfBnoKXsB38jRfM7qd_G2c/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 164757999,
+          "mode": "list",
+          "cachedResultName": "New AI Articles",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1m00bkGFFjEqRKfbHzldC8mfBnoKXsB38jRfM7qd_G2c/edit#gid=164757999"
+        },
+        "numberToDelete": 5
+      },
+      "id": "c9d8dd2a-cfa5-4777-a563-89dcb3bb033a",
+      "name": "Clear Google Sheets Article Page",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        660,
+        660
+      ]
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1m00bkGFFjEqRKfbHzldC8mfBnoKXsB38jRfM7qd_G2c",
+          "mode": "list",
+          "cachedResultName": "Test visual scrapping",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1m00bkGFFjEqRKfbHzldC8mfBnoKXsB38jRfM7qd_G2c/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "List fo URLs",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1m00bkGFFjEqRKfbHzldC8mfBnoKXsB38jRfM7qd_G2c/edit#gid=0"
+        },
+        "options": {}
+      },
+      "id": "ffb9dbcf-0e04-4b58-8284-7b269f01b397",
+      "name": "Load the requested URLs from Google Sheets",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        860,
+        660
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://app.scrapingbee.com/api/v1",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "api_key",
+              "value": "CVO8LTAQPN59BOXYAB3ZVQU4UM4O2UI0D7VNW7BZGE3M1EZI9MCTBW4CMS947QVOHGVCCBGQSVT7SFJW"
+            },
+            {
+              "name": "url",
+              "value": "={{ $json.link }}"
+            },
+            {
+              "name": "screenshot_full_page",
+              "value": "true"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "User-Agent",
+              "value": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "89e50303-cc7b-42ca-af6a-a662c54a24c6",
+      "name": "ScrapingBee - Get page screenshots",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        1420,
+        660
+      ],
+      "typeVersion": 4.2
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-1.5-pro-latest",
+        "options": {}
+      },
+      "id": "c68e1fc1-d22f-4952-aa70-ba76d64786b8",
+      "name": "Google Gemini Model with Vision",
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "position": [
+        1720,
+        860
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n    \"title\": \"Man Utd suffers defeat in derby; Chelsea also loses\",\n    \"new_article\": \"It was a disappointing weekend for Manchester United as they lost the derby, and Chelsea also failed to secure a win, adding to a weekend of upsets in the Premier League.\"\n}"
+      },
+      "id": "7218666d-3385-453c-a9fc-26e44d650099",
+      "name": "Structured Output Parser",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "position": [
+        1900,
+        860
+      ],
+      "typeVersion": 1.2
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "options": {}
+      },
+      "id": "3d4efe1e-0a89-4387-8cc6-6c41a4518315",
+      "name": "Merge all data",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [
+        2020,
+        680
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1m00bkGFFjEqRKfbHzldC8mfBnoKXsB38jRfM7qd_G2c",
+          "mode": "list",
+          "cachedResultName": "Test visual scrapping",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1m00bkGFFjEqRKfbHzldC8mfBnoKXsB38jRfM7qd_G2c/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 164757999,
+          "mode": "list",
+          "cachedResultName": "New AI Articles",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1m00bkGFFjEqRKfbHzldC8mfBnoKXsB38jRfM7qd_G2c/edit#gid=164757999"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "URL": "={{ $json.link }}",
+            "new_article_1": "=n8n{{ $json.output.new_article }}",
+            "title_1": "=n8n{{ $json.output.title }}",
+            "Webpage": "={{ $json.site }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Webpage",
+              "displayName": "Webpage",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "URL",
+              "displayName": "URL",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "title_1",
+              "displayName": "title_1",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "new_article_1",
+              "displayName": "new_article_1",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "title_2",
+              "displayName": "title_2",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "new_article_2",
+              "displayName": "new_article_2",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Title 3",
+              "displayName": "Title 3",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "New_article 3",
+              "displayName": "New_article 3",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Title 4",
+              "displayName": "Title 4",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "New_article 4",
+              "displayName": "New_article 4",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Title 5",
+              "displayName": "Title 5",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "New_article 5",
+              "displayName": "New_article 5",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "bcdb58f4-7e0f-4ec9-a544-779e431ef200",
+      "name": "Write data to Google Sheets",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        2180,
+        680
+      ]
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1m00bkGFFjEqRKfbHzldC8mfBnoKXsB38jRfM7qd_G2c",
+          "mode": "list",
+          "cachedResultName": "Test visual scrapping",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1m00bkGFFjEqRKfbHzldC8mfBnoKXsB38jRfM7qd_G2c/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 164757999,
+          "mode": "list",
+          "cachedResultName": "New AI Articles",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1m00bkGFFjEqRKfbHzldC8mfBnoKXsB38jRfM7qd_G2c/edit#gid=164757999"
+        },
+        "options": {}
+      },
+      "id": "3803b578-9f45-47ce-b3b3-3184a482f3b2",
+      "name": "Load data from Google Sheets",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        720,
+        1180
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get the input data from the previous node\nconst inputData = $input.all();\n\n// Initialize an array to store titles\nconst titles = [];\n\n// Iterate through each key in the input data\nfor (let key in inputData) {\n  // Get the current item\n  let item = inputData[key].json;\n\n  // Iterate through each property of the item\n  for (let prop in item) {\n    // Check if the property name includes 'title'\n      if (prop.includes('title')) {\n      // Push the value of the property into the titles array\n      titles.push(item[prop].substring(3) ? item[prop].substring(3) : \"No title\");\n    }\n  }\n}\n\nreturn titles.map(title => ({ json: { title } }));"
+      },
+      "id": "a74b1327-a3ff-4d61-955b-40141c140ba1",
+      "name": "Filter the titles for image creation",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        920,
+        1180
+      ]
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1m00bkGFFjEqRKfbHzldC8mfBnoKXsB38jRfM7qd_G2c",
+          "mode": "list",
+          "cachedResultName": "Test visual scrapping",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1m00bkGFFjEqRKfbHzldC8mfBnoKXsB38jRfM7qd_G2c/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 164757999,
+          "mode": "list",
+          "cachedResultName": "New AI Articles",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1m00bkGFFjEqRKfbHzldC8mfBnoKXsB38jRfM7qd_G2c/edit#gid=164757999"
+        },
+        "options": {}
+      },
+      "id": "424bdb3c-68d7-48f1-8db8-55e8ce39403a",
+      "name": "Load data again from Google Sheets",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        720,
+        1480
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\n\nfunction createImageTag(title, altText) {\n    // Convert quotes to HTML entities\n    const safeTitle = title.replace(/\"/g, '&quot;');\n    const safeAlt = altText.replace(/\"/g, '&quot;');\n    return `<img src=\"https://pub-b4ddf64806114e94831becad81ec062e.r2.dev/${safeTitle}.jpg\" alt=\"${safeAlt}\">`;\n}\n\n// Rest of the code remains the same with template literals\nconst htmlContent = items.map(item => {\n    let postContent = `\n        <div class=\"post\">\n            <h1><a href=\"${item.json.URL.replace(/\"/g, '&quot;')}\">${item.json.Webpage}</a></h1>\n            ${createImageTag(item.json.title_1, item.json.title_1)}\n            <h2>${item.json.title_1.substring(3)}</h2>\n            <div class=\"article\">\n                <p>${item.json.new_article_1.substring(3)}</p>\n            </div>\n    `;\n\n    // Check if title_2 and new_article_2 exist before including them\n    if (item.json.title_2 && item.json.new_article_2) {\n        postContent += `\n            ${createImageTag(item.json.title_2.substring(3), item.json.title_2.substring(3))}\n            <h2>${item.json.title_2}</h2>\n            <div class=\"article\">\n                <p>${item.json.new_article_2.substring(3)}</p>\n            </div>\n        `;\n    }\n\n    // Close the div tag for the post\n    postContent += '</div>';\n\n    return postContent;\n}).join('');\n\n// Return the generated HTML content\nreturn [{ json: { html: htmlContent } }];\n\n\n\n"
+      },
+      "id": "114c7008-3fb5-4c38-9181-4b250cd9aac0",
+      "name": "Create the dynamic <div> of the Blog Page",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        920,
+        1480
+      ]
+    },
+    {
+      "parameters": {
+        "html": "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n    <meta charset=\"UTF-8\">\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n    <title>AI Insights: Daily News</title>\n    <style>\n        body {\n            font-family: Arial, sans-serif;\n            margin: 0;\n            padding: 20px;\n            background-color: #f4f4f4;\n        }\n        h1 {\n            text-align: center;\n            color: #333;\n        }\n        .content {\n            display: flex;\n            flex-direction: column; /* Stack divs vertically */\n            margin-top: 20px;\n        }\n        .post {\n          \n            background-color: #fff;\n            padding: 20px;\n            border-radius: 8px;\n            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);\n            margin-bottom: 20px; /* Space between posts */\n            text-align: center; /* Center content within parent container */\n        }\n        .post img {\n            max-width: 100%; /* Responsive image */\n            border-radius: 8px;\n            display: block; /* Ensure it behaves as a block-level element */\n            margin: 0 auto; /* Center the image horizontally */\n        }\n      .article {\n        text-align: left;\n      }\n    </style>\n</head>\n<body>\n    <h1>AI Insights: Daily News</h1>\n    <div class=\"content\">\n       {{ $json.html }}\n    </div>\n\n</body>\n</html>"
+      },
+      "id": "26403a0e-9cc8-4b4c-bced-f83a7689b6b1",
+      "name": "Create the final HTML",
+      "type": "n8n-nodes-base.html",
+      "typeVersion": 1.2,
+      "position": [
+        1120,
+        1480
+      ]
+    },
+    {
+      "parameters": {
+        "protocol": "sftp",
+        "operation": "upload",
+        "path": "=/var/www/html/home.accaderi.hu/index.html",
+        "binaryData": false,
+        "fileContent": "={{ $json.html }}"
+      },
+      "id": "b9a8da57-2f67-4eab-9deb-968ba86ce192",
+      "name": "Upload the HTML to the server using SFTP",
+      "type": "n8n-nodes-base.ftp",
+      "typeVersion": 1,
+      "position": [
+        1320,
+        1480
+      ],
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.url }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Accept",
+              "value": "text/html"
+            },
+            {
+              "name": "User-Agent",
+              "value": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "5a83b6c3-ff9f-4ab7-b0b0-1f1d6996738e",
+      "name": "Get HTMLs of the requested URLs",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1040,
+        660
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://url-to-screenshot.p.rapidapi.com/get",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "url",
+              "value": "={{ $json.link }}"
+            },
+            {
+              "name": "height",
+              "value": "-1"
+            },
+            {
+              "name": "width",
+              "value": "1024"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-rapidapi-key",
+              "value": "YOUR API KEY"
+            },
+            {
+              "name": "x-rapidapi-host",
+              "value": "url-to-screenshot.p.rapidapi.com"
+            },
+            {
+              "name": "Accept",
+              "value": "image/png"
+            }
+          ]
+        },
+        "options": {
+          "batching": {
+            "batch": {
+              "batchSize": 1,
+              "batchInterval": 5000
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1420,
+        880
+      ],
+      "id": "6f3a2d70-f77a-4ef7-bea6-bdca556a953a",
+      "name": "RapidAPI - URL to screenshot"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "Describe what is in the picture.",
+        "hasOutputParser": true,
+        "messages": {
+          "messageValues": [
+            {
+              "message": "=You are tasked with analyzing a screenshot of a website featuring an article. From this content, extract the title and the main article body. Based on this information:\nWrite a summary of the article in two concise sentences.\nProvide your personal take on the article. Your take should include an analysis of its impact, highlight any relevant implications, and offer additional insights or perspectives on the story. Start your take after the summary like “I think…”\nPlease provide the response strictly in the following JSON format, without any deviations. Your output should always follow this format exactly, with the proper key-value pairs as specified:\nJSON\n  {\n    \"title\": \"Title here\",\n    \"new_article\": \"Article summary. I think… your take is here\"\n  }\nEnsure that the title field contains the title of the article. If no title is provided, use \"no title\" as the value for the title key. The new_article field should contain the article summary, followed by your opinion starting with \"I think\". Do not include any additional content or fields outside of this format.\n\nExamples:\nInput:\n(Screenshot text)\n\"Title: Tech Giants Collaborate to Build AI for Climate Change Solutions\"\n\"Body: In an unprecedented move, several leading technology companies have joined forces to develop AI systems aimed at combating climate change. The initiative focuses on improving renewable energy storage, optimizing power grids, and predicting climate patterns with unparalleled accuracy.\"\nOutput (JSON):\n{\n  \"title\": \"Tech Giants Collaborate to Build AI for Climate Change Solutions\",\n  \"new_article\": \"Leading tech companies are uniting to create AI solutions addressing climate change, focusing on renewable energy storage, power grids, and climate prediction. I think this initiative highlights the transformative potential of technology in addressing global challenges, but it also raises concerns about data privacy and whether these advancements will be equitably shared with underserved communities.\"\n}\n\n\nInput:\n(Screenshot text)\n\"Title: Study Finds Daily Walks Improve Mental Health\"\n\"Body: A recent study reveals that a 30-minute walk each day significantly boosts mental well-being. Researchers found that walking reduces stress, enhances mood, and improves focus, regardless of participants' age or fitness level.\"\nOutput (JSON):\n{\n  \"title\": \"Study Finds Daily Walks Improve Mental Health\",\n  \"new_article\": \"Daily 30-minute walks enhance mental health by reducing stress and improving mood and focus. I think this underscores the power of simple, accessible habits in promoting wellness, but we must address systemic issues such as a lack of safe walking spaces in certain communities to make this practice universally viable.\"\n}\n\n\nInput:\n(Screenshot text)\n\"Title: New App Teaches Kids Coding Through Gaming\"\n\"Body: A newly launched app aims to teach children programming skills by integrating coding lessons into engaging video games. The app targets kids aged 8 to 14, providing real-time feedback and encouraging creative problem-solving through interactive gameplay.\"\nOutput (JSON):\n{\n  \"title\": \"New App Teaches Kids Coding Through Gaming\",\n  \"new_article\": \"A new app combines gaming and coding lessons, designed to teach children aged 8 to 14 programming skills in an interactive and fun environment. I think this is an exciting step toward making coding accessible to young learners, but it’s important to ensure that the app remains affordable and reaches students in underprivileged communities to maximize its impact.\"\n}\n"
+            },
+            {
+              "type": "HumanMessagePromptTemplate",
+              "messageType": "imageBinary"
+            }
+          ]
+        }
+      },
+      "id": "bf3d769a-11bf-4b3e-91fb-bdad839d7515",
+      "name": "Journalist",
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "position": [
+        1720,
+        720
+      ],
+      "typeVersion": 1.4
+    },
+    {
+      "parameters": {
+        "operation": "resize",
+        "width": 55,
+        "height": 55,
+        "resizeOption": "percent",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.editImage",
+      "typeVersion": 1,
+      "position": [
+        1580,
+        760
+      ],
+      "id": "ca2ad430-ee3f-4146-85af-f31a58ce3191",
+      "name": "Reduce Image Size"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api-inference.huggingface.co/models/black-forest-labs/FLUX.1-schnell",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "="
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "inputs",
+              "value": "=Depict {{ $json.title }}"
+            }
+          ]
+        },
+        "options": {
+          "batching": {
+            "batch": {
+              "batchSize": 1,
+              "batchInterval": 10000
+            }
+          }
+        }
+      },
+      "id": "20e06349-b628-4660-90ad-25bc387b7143",
+      "name": "Hugging Face for image generation",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        1120,
+        1180
+      ],
+      "notesInFlow": true,
+      "typeVersion": 4.2,
+      "retryOnFail": false,
+      "waitBetweenTries": 3000,
+      "notes": " "
+    },
+    {
+      "parameters": {
+        "operation": "upload",
+        "bucketName": "flux-images",
+        "fileName": "=n8n{{ $json.title }}.jpg",
+        "additionalFields": {}
+      },
+      "id": "225293cb-75bd-4011-8ee1-ec3cc54dfc23",
+      "name": "Upload image to an R2 bucket",
+      "type": "n8n-nodes-base.s3",
+      "position": [
+        1340,
+        1180
+      ],
+      "typeVersion": 1
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Return empty data1": {
+      "main": [
+        [
+          {
+            "node": "Load data again from Google Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Return empty data": {
+      "main": [
+        [
+          {
+            "node": "Load data from Google Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Select random article leaving the 1st one out": {
+      "main": [
+        [
+          {
+            "node": "ScrapingBee - Get page screenshots",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Clear Google Sheets Article Page",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Clear Google Sheets Article Page": {
+      "main": [
+        [
+          {
+            "node": "Load the requested URLs from Google Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Load the requested URLs from Google Sheets": {
+      "main": [
+        [
+          {
+            "node": "Get HTMLs of the requested URLs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Model with Vision": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Journalist",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Journalist",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge all data": {
+      "main": [
+        [
+          {
+            "node": "Write data to Google Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Write data to Google Sheets": {
+      "main": [
+        [
+          {
+            "node": "Return empty data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Load data from Google Sheets": {
+      "main": [
+        [
+          {
+            "node": "Filter the titles for image creation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter the titles for image creation": {
+      "main": [
+        [
+          {
+            "node": "Hugging Face for image generation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Load data again from Google Sheets": {
+      "main": [
+        [
+          {
+            "node": "Create the dynamic <div> of the Blog Page",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create the dynamic <div> of the Blog Page": {
+      "main": [
+        [
+          {
+            "node": "Create the final HTML",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create the final HTML": {
+      "main": [
+        [
+          {
+            "node": "Upload the HTML to the server using SFTP",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get HTMLs of the requested URLs": {
+      "main": [
+        [
+          {
+            "node": "Select random article leaving the 1st one out",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Journalist": {
+      "main": [
+        [
+          {
+            "node": "Merge all data",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Reduce Image Size": {
+      "main": [
+        [
+          {
+            "node": "Journalist",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "ScrapingBee - Get page screenshots": {
+      "main": [
+        [
+          {
+            "node": "Merge all data",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Reduce Image Size",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Hugging Face for image generation": {
+      "main": [
+        [
+          {
+            "node": "Upload image to an R2 bucket",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upload image to an R2 bucket": {
+      "main": [
+        [
+          {
+            "node": "Return empty data1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "48f18bc1-e059-4302-a3c1-84b9b17815b2",
+  "meta": {
+    "instanceId": "c99ce5d01ad4b1a36fa32526c15e504118981657c8748a5722bae2ad346cdd2f"
+  },
+  "id": "IPpK7hcFwJXMRT9h",
+  "tags": []
+}
