@@ -20,7 +20,9 @@ This guide outlines the process of creating an automated workflow for generating
 
 Before starting, ensure you have set up the following:
 
-1. API accounts:
+1. n8n installed and running on your server (possibly self hosted)
+
+2. API accounts:
    - Google Cloud API
    - Scraping Bee or RapidAPI
    - Google Gemini
@@ -37,11 +39,11 @@ Before starting, ensure you have set up the following:
 </p>
 
 
-2. Google Sheets:
+3. Google Sheets:
    - One tab for storing URLs of news sources
    - Another tab for collecting AI-generated articles (titles and links)
 
-3. A home server for hosting the webpage
+4. A home server for hosting the webpage
 
 ### Workflow Steps
 
