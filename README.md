@@ -33,7 +33,7 @@ Before starting, ensure you have set up the following:
 </p>
 
 <p align="center">
-  <a href="https://youtu.be/n09p8Y7XfNI">Guide to create authorizations for n8n nodes</a>
+  <a href="https://youtu.be/N1UMPgE4rF8">Guide to create authorizations for n8n nodes</a>
 </p>
 
 
