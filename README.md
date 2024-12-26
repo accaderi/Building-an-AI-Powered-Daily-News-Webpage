@@ -23,11 +23,11 @@ Before starting, ensure you have set up the following:
 1. n8n installed and running on your server (possibly self hosted)
 
 2. API accounts:
-   - Google Cloud API
-   - Scraping Bee or RapidAPI
-   - Google Gemini
-   - Hugging Face
-   - Cloudflare
+   - Google Cloud API to use Google Sheets
+   - Scraping Bee or RapidAPI to take full screenshot of webpages
+   - Google Gemini to use Gogole Gemini models
+   - Hugging Face Token to use Flux image Generator Model
+   - Cloudflare API to use their R2 Object Storage
   <p align="center">
   <a href="https://youtu.be/N1UMPgE4rF8">
     <img src="https://img.youtube.com/vi/N1UMPgE4rF8/0.jpg" alt="Youtube Video">
